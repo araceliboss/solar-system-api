@@ -12,7 +12,7 @@ def create_app(test_config=None):
     app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql+psycopg2://postgres:postgres@localhost:5432/solar_system_development"
 
     db.init_app(app)
-    migrate.init__app(app, db)
+    migrate.init_app(app, db)
 
     from .routes import planets_bp
     app.register_blueprint(planets_bp)
