@@ -29,6 +29,11 @@ def get_planet():
             })
     return jsonify(planets_response)
 
+def is_int(value):
+    try: 
+        return int(value)
+    except ValueError:
+        return False
 
 @planets_bp.route("/planets/<planet_id>", methods=["GET", "PUT", "DELETE"])
 def handle_planet(planet_id):
@@ -36,27 +41,36 @@ def handle_planet(planet_id):
     
     if planet is None:
         return make_response("", 404)
+    
+    if not is_int(planet_id):
+        return {
+            "message": f"id {planet_id} must be an integer", 
+            "success": False 
+        }, 400
 
     if request.method == "GET":
 
-        return {
-                "id": planet.id,
-                "name": planet.name,
-                "description": planet.description
-        }
+        if planet:
+            return planet.to_json(), 200
+
 
     elif request.method == "PUT":
+        if planet: 
+            form_data = request.get_json()
+            planet.name = form_data["name"]
+            planet.description = form_data["description"]
+            db.session.commit()
 
-        form_data = request.get_json()
-        planet.name = form_data["name"]
-        planet.description = form_data["description"]
-        db.session.commit()
-
-        return make_response(f"Planet #{planet_id} successfully updated", 200)
+            return make_response(f"Planet #{planet_id} successfully updated", 200)
 
     elif request.method == "DELETE":
-        db.session.delete(planet)
-        db.session.commit()
+        if planet:
+            db.session.delete(planet)
+            db.session.commit()
 
-        return make_response(f"Planet #{planet.id} successfully deleted", 200)
+            return make_response(f"Planet #{planet_id} successfully deleted", 200)
 
+    return make_response({
+            "message": f"Planet with {planet_id} was not found", 
+            "success": False 
+        }, 404)
